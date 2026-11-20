@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareSphere AI - Intelligent Patient Case Management</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            teal: {
+              50: '#f0fdfa',
+              100: '#ccfbf1',
+              500: '#14b8a6',
+              600: '#0d9488',
+              700: '#0f766e',
+            },
+            navy: {
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#020617',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- React 18 & Babel for Browser Execution -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    @media print {
+      aside, header, .no-print { display: none !important; }
+      main { padding: 0 !important; margin: 0 !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased font-sans">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // --- Lightweight Built-in SVG Icons (Zero external dependency failures) ---
+    const Icon = ({ name, className = "w-5 h-5" }) => {
+      const icons = {
+        stethoscope: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />,
+        dashboard: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />,
+        users: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />,
+        userPlus: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />,
+        clipboard: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />,
+        history: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />,
+        sparkles: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />,
+        chart: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />,
+        settings: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />,
+        search: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />,
+        bell: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />,
+        download: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />,
+        print: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />,
+        check: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />,
+        close: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+      };
+      return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          {icons[name] || icons.dashboard}
+        </svg>
+      );
+    };
+
+    // --- Seed Data ---
+    const INITIAL_PATIENTS = [
+      { id: "PAT-1082", fullName: "Eleanor Vance", age: 44, gender: "Female", phone: "+1 (555) 392-8819", email: "eleanor.v@example.com", bloodGroup: "O+", registeredDate: "2026-03-10", lastVisit: "2026-04-01", status: "Active", category: "Cardiology", allergies: "Penicillin", chronic: "Hypertension" },
+      { id: "PAT-1083", fullName: "Marcus Sterling", age: 52, gender: "Male", phone: "+1 (555) 841-2094", email: "marcus.s@example.com", bloodGroup: "A+", registeredDate: "2026-03-14", lastVisit: "2026-04-02", status: "Active", category: "Endocrinology", allergies: "Sulfa drugs", chronic: "Type 2 Diabetes" },
+      { id: "PAT-1084", fullName: "Amina Al-Mansoor", age: 29, gender: "Female", phone: "+1 (555) 773-1940", email: "amina.m@example.com", bloodGroup: "B-", registeredDate: "2026-03-18", lastVisit: "2026-03-25", status: "Follow-up Due", category: "Pulmonology", allergies: "Dust mites, NSAIDs", chronic: "Asthma" },
+      { id: "PAT-1085", fullName: "David Chen", age: 38, gender: "Male", phone: "+1 (555) 492-3321", email: "david.c@example.com", bloodGroup: "AB+", registeredDate: "2026-03-22", lastVisit: "2026-04-03", status: "Active", category: "Gastroenterology", allergies: "None", chronic: "GERD" },
+      { id: "PAT-1086", fullName: "Sarah Jenkins", age: 63, gender: "Female", phone: "+1 (555) 601-9273", email: "sarah.j@example.com", bloodGroup: "O-", registeredDate: "2026-03-28", lastVisit: "2026-03-30", status: "Completed", category: "Neurology", allergies: "Aspirin", chronic: "Migraine with Aura" }
+    ];
+
+    const INITIAL_CONSULTATIONS = [
+      { id: "CNS-5001", patientId: "PAT-1082", patientName: "Eleanor Vance", date: "2026-04-01", complaint: "Occasional occipital morning headaches, mild dizziness for 2 weeks.", vitals: "BP 138/88 mmHg, HR 74 bpm", assessment: "Elevated BP, likely stress-induced. Advised sodium reduction & BP monitoring.", followUp: "2026-04-15" },
+      { id: "CNS-5002", patientId: "PAT-1083", patientName: "Marcus Sterling", date: "2026-04-02", complaint: "Routine quarterly diabetic checkup, reports postprandial fatigue.", vitals: "BP 128/82 mmHg, HbA1c 7.1%", assessment: "Type 2 Diabetes under fair control. Maintained Metformin 500mg BID.", followUp: "2026-05-02" },
+      { id: "CNS-5003", patientId: "PAT-1085", patientName: "David Chen", date: "2026-04-03", complaint: "Substernal heartburn after dinner, nocturnal dry throat.", vitals: "BP 122/76 mmHg, SpO2 99%", assessment: "Gastroesophageal Reflux Disease (GERD). Advised lifestyle & head elevation.", followUp: "2026-04-20" }
+    ];
+
+    function App() {
+      const [currentTab, setCurrentTab] = useState('dashboard');
+      const [patients, setPatients] = useState(() => {
+        const local = localStorage.getItem('cs_patients');
+        return local ? JSON.parse(local) : INITIAL_PATIENTS;
+      });
+      const [consultations, setConsultations] = useState(() => {
+        const local = localStorage.getItem('cs_consultations');
+        return local ? JSON.parse(local) : INITIAL_CONSULTATIONS;
+      });
+
+      // Modals & Navigation triggers
+      const [selectedPatientModal, setSelectedPatientModal] = useState(null);
+      const [prefilledPatientId, setPrefilledPatientId] = useState('');
+      const [aiNoteBuffer, setAiNoteBuffer] = useState('');
+
+      useEffect(() => {
+        localStorage.setItem('cs_patients', JSON.stringify(patients));
+      }, [patients]);
+
+      useEffect(() => {
+        localStorage.setItem('cs_consultations', JSON.stringify(consultations));
+      }, [consultations]);
+
+      // Quick helper to start case intake for a specific patient
+      const handleStartCaseForPatient = (p) => {
+        setPrefilledPatientId(p.id);
+        setCurrentTab('case-taking');
+      };
+
+      return (
+        <div className="flex min-h-screen bg-slate-50 text-slate-800">
+          {/* Sidebar */}
+          <aside className="w-64 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col justify-between hidden md:flex">
+            <div>
+              <div className="h-20 flex items-center gap-3 px-6 border-b border-slate-100">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-600 to-slate-900 flex items-center justify-center text-white shadow-md shadow-teal-500/20">
+                  <Icon name="stethoscope" className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="font-bold text-lg text-slate-900 leading-tight">CareSphere <span className="text-teal-600">AI</span></h1>
+                  <p className="text-[10px] text-slate-400 font-medium">Intelligent Case Taking</p>
+                </div>
+              </div>
+
+              <nav className="p-4 space-y-1">
+                {[
+                  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+                  { id: 'patients', label: 'Patients Directory', icon: 'users' },
+                  { id: 'registration', label: 'New Patient Intake', icon: 'userPlus' },
+                  { id: 'case-taking', label: 'Patient Case Taking', icon: 'clipboard' },
+                  { id: 'history', label: 'Consultation History', icon: 'history' },
+                  { id: 'ai-assistant', label: 'AI Case Assistant', icon: 'sparkles', badge: 'AI' },
+                  { id: 'reports', label: 'Reports & Analytics', icon: 'chart' },
+                  { id: 'settings', label: 'Settings', icon: 'settings' },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setCurrentTab(item.id)}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
+                      currentTab === item.id 
+                        ? 'bg-teal-50 text-teal-700 shadow-xs' 
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon name={item.icon} className={`w-4 h-4 ${currentTab === item.id ? 'text-teal-600' : 'text-slate-400'}`} />
+                      <span>{item.label}</span>
+                    </div>
+                    {item.badge && (
+                      <span className="bg-teal-500 text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase">{item.badge}</span>
+                    )}
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            <div className="p-4 border-t border-slate-100">
+              <div className="rounded-2xl bg-teal-50/70 border border-teal-100 p-3 text-[11px] text-teal-800">
+                <p className="font-bold">Academic Demonstrator</p>
+                <p className="text-teal-700/80 mt-0.5 leading-snug">College AI subject project. Local state active.</p>
+              </div>
+            </div>
+          </aside>
+
+          {/* Main Area */}
+          <div className="flex-1 flex flex-col min-w-0">
+            {/* Topbar */}
+            <header className="h-20 bg-white/90 border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-20 backdrop-blur-md">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-bold text-slate-800 uppercase tracking-wider text-[11px] bg-slate-100 px-3 py-1.5 rounded-lg">
+                  {currentTab.replace('-', ' ')}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setCurrentTab('registration')}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                >
+                  <Icon name="userPlus" className="w-3.5 h-3.5" />
+                  <span>Register Patient</span>
+                </button>
+                <button
+                  onClick={() => setCurrentTab('case-taking')}
+                  className="bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm shadow-teal-600/30 flex items-center gap-1.5"
+                >
+                  <Icon name="clipboard" className="w-3.5 h-3.5" />
+                  <span>Take Case</span>
+                </button>
+              </div>
+            </header>
+
+            {/* Dynamic View Content */}
+            <main className="p-6 md:p-8 flex-1 overflow-y-auto max-w-7xl w-full mx-auto">
+              {currentTab === 'dashboard' && (
+                <DashboardView 
+                  patients={patients} 
+                  consultations={consultations} 
+                  onNavigate={setCurrentTab} 
+                  onSelectPatient={handleStartCaseForPatient} 
+                />
+              )}
+              {currentTab === 'patients' && (
+                <PatientsView 
+                  patients={patients} 
+                  onViewProfile={(p) => setSelectedPatientModal(p)}
+                  onDeletePatient={(id) => setPatients(patients.filter(p => p.id !== id))}
+                  onNavigateRegister={() => setCurrentTab('registration')}
+                />
+              )}
+              {currentTab === 'registration' && (
+                <RegistrationView 
+                  onAddPatient={(newP) => {
+                    setPatients([newP, ...patients]);
+                    setCurrentTab('patients');
+                  }} 
+                />
+              )}
+              {currentTab === 'case-taking' && (
+                <CaseTakingView 
+                  patients={patients}
+                  prefilledPatientId={prefilledPatientId}
+                  onSaveCase={(c) => {
+                    setConsultations([c, ...consultations]);
+                    setCurrentTab('history');
+                  }}
+                  onSendToAi={(notes) => {
+                    setAiNoteBuffer(notes);
+                    setCurrentTab('ai-assistant');
+                  }}
+                />
+              )}
+              {currentTab === 'history' && (
+                <HistoryView consultations={consultations} />
+              )}
+              {currentTab === 'ai-assistant' && (
+                <AiAssistantView initialNotes={aiNoteBuffer} />
+              )}
+              {currentTab === 'reports' && (
+                <ReportsView patients={patients} consultations={consultations} />
+              )}
+              {currentTab === 'settings' && (
+                <SettingsView />
+              )}
+            </main>
+          </div>
+
+          {/* Patient Detail Modal */}
+          {selectedPatientModal && (
+            <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+                <div className="flex justify-between items-center border-b pb-3">
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-base">{selectedPatientModal.fullName}</h3>
+                    <p className="text-xs text-teal-600 font-bold">{selectedPatientModal.id} • {selectedPatientModal.category}</p>
+                  </div>
+                  <button onClick={() => setSelectedPatientModal(null)} className="text-slate-400 hover:text-slate-600">
+                    <Icon name="close" className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div><span className="text-slate-400 block font-semibold">Age / Gender</span>{selectedPatientModal.age} yrs • {selectedPatientModal.gender}</div>
+                  <div><span className="text-slate-400 block font-semibold">Blood Group</span>{selectedPatientModal.bloodGroup}</div>
+                  <div><span className="text-slate-400 block font-semibold">Phone</span>{selectedPatientModal.phone}</div>
+                  <div><span className="text-slate-400 block font-semibold">Status</span>{selectedPatientModal.status}</div>
+                </div>
+                <div className="bg-slate-50 p-3 rounded-xl text-xs space-y-1">
+                  <span className="text-slate-400 uppercase text-[10px] font-bold">Allergies</span>
+                  <p className="font-semibold text-rose-600">{selectedPatientModal.allergies || 'No known allergies'}</p>
+                </div>
+                <div className="bg-slate-50 p-3 rounded-xl text-xs space-y-1">
+                  <span className="text-slate-400 uppercase text-[10px] font-bold">Chronic Conditions</span>
+                  <p className="font-semibold text-slate-800">{selectedPatientModal.chronic || 'None'}</p>
+                </div>
+                <div className="flex justify-end pt-2">
+                  <button onClick={() => setSelectedPatientModal(null)} className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold">
+                    Close Dossier
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // --- 1. DASHBOARD VIEW ---
+    function DashboardView({ patients, consultations, onNavigate, onSelectPatient }) {
+      return (
+        <div className="space-y-8">
+          {/* Hero Banner */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-teal-950 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
+            <div className="relative z-10 max-w-xl space-y-3">
+              <span className="bg-teal-500/20 text-teal-300 text-[10px] uppercase font-bold tracking-wider px-3 py-1 rounded-full">
+                CareSphere Clinical Engine v1.0
+              </span>
+              <h2 className="text-3xl font-extrabold tracking-tight">Clinical Operations Center</h2>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Welcome back, Dr. Evelyn Reed. Ready for rounds? All intake cases are monitored with live summary generation.
+              </p>
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => onNavigate('case-taking')} className="bg-teal-500 hover:bg-teal-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold transition">
+                  Start New Intake
+                </button>
+                <button onClick={() => onNavigate('patients')} className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-xs font-bold transition">
+                  View Patient Directory
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 4 Metric Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Patients</span>
+              <p className="text-3xl font-extrabold text-slate-900 mt-2">{patients.length}</p>
+              <p className="text-xs font-semibold text-teal-600 mt-1">+2 new this week</p>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Consultations</span>
+              <p className="text-3xl font-extrabold text-slate-900 mt-2">{consultations.length}</p>
+              <p className="text-xs font-semibold text-sky-600 mt-1">100% evaluated</p>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Follow-ups Due</span>
+              <p className="text-3xl font-extrabold text-slate-900 mt-2">{patients.filter(p => p.status === 'Follow-up Due').length || 1}</p>
+              <p className="text-xs font-semibold text-amber-600 mt-1">Attention recommended</p>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">AI Summaries Built</span>
+              <p className="text-3xl font-extrabold text-slate-900 mt-2">{consultations.length + 8}</p>
+              <p className="text-xs font-semibold text-teal-600 mt-1">NLP Extractor ready</p>
+            </div>
+          </div>
+
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* SVG Weekly Activity Bar Chart */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs lg:col-span-2 space-y-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">Weekly Patient Encounters</h3>
+                  <p className="text-xs text-slate-400">Consultations across current academic semester</p>
+                </div>
+                <span className="text-xs font-semibold text-teal-700 bg-teal-50 px-2 py-1 rounded-md">Mon - Sun</span>
+              </div>
+              <div className="h-48 flex items-end justify-between gap-4 pt-6 px-2 border-b border-slate-100">
+                {[
+                  { d: 'Mon', val: 65, num: 12 },
+                  { d: 'Tue', val: 80, num: 16 },
+                  { d: 'Wed', val: 95, num: 21 },
+                  { d: 'Thu', val: 70, num: 14 },
+                  { d: 'Fri', val: 100, num: 24 },
+                  { d: 'Sat', val: 40, num: 8 },
+                  { d: 'Sun', val: 20, num: 4 }
+                ].map(bar => (
+                  <div key={bar.d} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                    <div className="text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition">{bar.num}</div>
+                    <div 
+                      style={{ height: `${bar.val}%` }} 
+                      className="w-full max-w-[28px] rounded-t-lg bg-teal-600 hover:bg-teal-500 transition-all"
+                    />
+                    <span className="text-[11px] text-slate-400 font-semibold">{bar.d}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Department Breakdown */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+              <h3 className="font-bold text-slate-900 text-sm">Department Intake Distribution</h3>
+              <div className="space-y-3 pt-2">
+                {[
+                  { name: 'Cardiology', pct: 32, color: 'bg-teal-600' },
+                  { name: 'Endocrinology', pct: 28, color: 'bg-sky-500' },
+                  { name: 'Pulmonology', pct: 20, color: 'bg-indigo-500' },
+                  { name: 'Gastroenterology', pct: 12, color: 'bg-amber-500' },
+                  { name: 'Neurology', pct: 8, color: 'bg-rose-500' }
+                ].map(d => (
+                  <div key={d.name} className="space-y-1">
+                    <div className="flex justify-between text-xs font-semibold text-slate-700">
+                      <span>{d.name}</span>
+                      <span>{d.pct}%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                      <div className={`${d.color} h-full rounded-full`} style={{ width: `${d.pct}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Recent Action Tables */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="font-bold text-slate-900 text-sm">Registered Cohort</h3>
+                <button onClick={() => onNavigate('patients')} className="text-xs text-teal-600 font-bold hover:underline">View All</button>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {patients.slice(0, 4).map(p => (
+                  <div key={p.id} className="py-3 flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-xs text-slate-900">{p.fullName}</p>
+                      <p className="text-[11px] text-slate-400">{p.id} • {p.gender}, {p.age}y • {p.category}</p>
+                    </div>
+                    <button 
+                      onClick={() => onSelectPatient(p)} 
+                      className="text-xs bg-slate-50 hover:bg-teal-50 hover:text-teal-700 border border-slate-200 px-3 py-1.5 rounded-lg font-semibold transition"
+                    >
+                      Start Intake
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="font-bold text-slate-900 text-sm">Recent Consultations</h3>
+                <button onClick={() => onNavigate('history')} className="text-xs text-teal-600 font-bold hover:underline">Full Log</button>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {consultations.slice(0, 3).map(c => (
+                  <div key={c.id} className="py-3 space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-bold text-slate-900">{c.patientName}</span>
+                      <span className="text-slate-400">{c.date}</span>
+                    </div>
+                    <p className="text-xs text-slate-600 line-clamp-1">{c.complaint}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- 2. PATIENTS DIRECTORY VIEW ---
+    function PatientsView({ patients, onViewProfile, onDeletePatient, onNavigateRegister }) {
+      const [search, setSearch] = useState('');
+      const filtered = patients.filter(p => p.fullName.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase()));
+
+      return (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center flex-wrap gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">Patients Directory</h2>
+              <p className="text-xs text-slate-400">Search and manage clinical records and medical files.</p>
+            </div>
+            <button onClick={onNavigateRegister} className="bg-teal-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs hover:bg-teal-700">
+              + Register New Patient
+            </button>
+          </div>
+
+          <div className="bg-white p-3 rounded-2xl border border-slate-200">
+            <input 
+              type="text" 
+              placeholder="Search by patient name, ID, or phone..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full text-xs p-2 outline-none"
+            />
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase text-[10px]">
+                <tr>
+                  <th className="p-4">Patient</th>
+                  <th className="p-4">Contact</th>
+                  <th className="p-4">Department</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filtered.map(p => (
+                  <tr key={p.id} className="hover:bg-slate-50">
+                    <td className="p-4">
+                      <p className="font-bold text-slate-900">{p.fullName}</p>
+                      <p className="text-[11px] text-slate-400">{p.id} • {p.gender}, {p.age}y • Blood {p.bloodGroup}</p>
+                    </td>
+                    <td className="p-4 text-slate-600">{p.phone}</td>
+                    <td className="p-4 font-semibold text-slate-700">{p.category}</td>
+                    <td className="p-4">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                        p.status === 'Active' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                      }`}>
+                        {p.status}
+                      </span>
+                    </td>
+                    <td className="p-4 text-right space-x-2">
+                      <button onClick={() => onViewProfile(p)} className="text-teal-600 font-bold hover:underline">View Dossier</button>
+                      <button onClick={() => onDeletePatient(p.id)} className="text-rose-500 font-bold hover:underline">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    // --- 3. NEW PATIENT REGISTRATION ---
+    function RegistrationView({ onAddPatient }) {
+      const [form, setForm] = useState({
+        fullName: '', age: '', gender: 'Female', phone: '', category: 'Cardiology', allergies: '', chronic: ''
+      });
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!form.fullName || !form.phone) return alert('Name and phone required');
+        onAddPatient({
+          id: `PAT-${Math.floor(1000 + Math.random() * 9000)}`,
+          fullName: form.fullName,
+          age: form.age || 30,
+          gender: form.gender,
+          phone: form.phone,
+          bloodGroup: 'O+',
+          registeredDate: new Date().toISOString().split('T')[0],
+          lastVisit: new Date().toISOString().split('T')[0],
+          status: 'Active',
+          category: form.category,
+          allergies: form.allergies || 'None',
+          chronic: form.chronic || 'None'
+        });
+      };
+
+      return (
+        <div className="max-w-2xl bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-6">
+          <h2 className="text-xl font-bold text-slate-900">New Patient Registration</h2>
+          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="font-semibold block mb-1">Full Name *</label>
+                <input required className="w-full border p-2.5 rounded-xl outline-none" value={form.fullName} onChange={e => setForm({...form, fullName: e.target.value})} placeholder="e.g. John Doe" />
+              </div>
+              <div>
+                <label className="font-semibold block mb-1">Phone Number *</label>
+                <input required className="w-full border p-2.5 rounded-xl outline-none" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="+1 (555) 000-0000" />
+              </div>
+              <div>
+                <label className="font-semibold block mb-1">Age</label>
+                <input type="number" className="w-full border p-2.5 rounded-xl outline-none" value={form.age} onChange={e => setForm({...form, age: e.target.value})} placeholder="35" />
+              </div>
+              <div>
+                <label className="font-semibold block mb-1">Gender</label>
+                <select className="w-full border p-2.5 rounded-xl outline-none bg-slate-50" value={form.gender} onChange={e => setForm({...form, gender: e.target.value})}>
+                  <option value="Female">Female</option>
+                  <option value="Male">Male</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="font-semibold block mb-1">Specialty Department</label>
+                <select className="w-full border p-2.5 rounded-xl outline-none bg-slate-50" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
+                  <option value="Cardiology">Cardiology</option>
+                  <option value="Endocrinology">Endocrinology</option>
+                  <option value="Pulmonology">Pulmonology</option>
+                  <option value="Gastroenterology">Gastroenterology</option>
+                  <option value="Neurology">Neurology</option>
+                </select>
+              </div>
+              <div>
+                <label className="font-semibold block mb-1">Known Allergies</label>
+                <input className="w-full border p-2.5 rounded-xl outline-none" value={form.allergies} onChange={e => setForm({...form, allergies: e.target.value})} placeholder="e.g. Penicillin" />
+              </div>
+            </div>
+            <div>
+              <label className="font-semibold block mb-1">Chronic Illnesses</label>
+              <input className="w-full border p-2.5 rounded-xl outline-none" value={form.chronic} onChange={e => setForm({...form, chronic: e.target.value})} placeholder="e.g. Hypertension, Asthma" />
+            </div>
+            <button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white font-bold px-6 py-2.5 rounded-xl">
+              Register Patient
+            </button>
+          </form>
+        </div>
+      );
+    }
+
+    // --- 4. STRUCTURED CASE-TAKING FORM ---
+    function CaseTakingView({ patients, prefilledPatientId, onSaveCase, onSendToAi }) {
+      const [patientId, setPatientId] = useState(prefilledPatientId || patients[0]?.id || '');
+      const [form, setForm] = useState({
+        complaint: '', duration: '', pastMedical: '', vitals: '', exam: '', assessment: '', followUp: ''
+      });
+
+      const handleSave = (e) => {
+        e.preventDefault();
+        const p = patients.find(x => x.id === patientId);
+        onSaveCase({
+          id: `CNS-${Math.floor(1000 + Math.random() * 9000)}`,
+          patientId,
+          patientName: p ? p.fullName : 'Unknown',
+          date: new Date().toISOString().split('T')[0],
+          complaint: form.complaint,
+          vitals: form.vitals || 'Stable',
+          assessment: form.assessment || 'Observation documented',
+          followUp: form.followUp || 'None specified'
+        });
+      };
+
+      const handlePushToAi = () => {
+        const text = `Chief Complaint: ${form.complaint}. Duration: ${form.duration}. Past History: ${form.pastMedical}. Vitals & Exam: ${form.vitals} - ${form.exam}. Assessment: ${form.assessment}.`;
+        onSendToAi(text);
+      };
+
+      return (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">Clinical Case-Taking</h2>
+              <p className="text-xs text-slate-400">Standardized clinical intake form for active consultation.</p>
+            </div>
+            <button onClick={handlePushToAi} className="bg-gradient-to-r from-teal-600 to-sky-600 text-white px-4 py-2 rounded-xl text-xs font-bold">
+              Load into AI Summarizer
+            </button>
+          </div>
+
+          <form onSubmit={handleSave} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4 text-xs">
+            <div>
+              <label className="font-semibold block mb-1">Select Patient</label>
+              <select value={patientId} onChange={e => setPatientId(e.target.value)} className="w-full border p-2.5 rounded-xl bg-slate-50 font-semibold">
+                {patients.map(p => (
+                  <option key={p.id} value={p.id}>{p.fullName} ({p.id}) - {p.category}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="font-semibold block mb-1">Chief Complaints *</label>
+                <textarea required rows={2} className="w-full border p-2.5 rounded-xl outline-none" placeholder="Primary complaints reported by patient..." value={form.complaint} onChange={e => setForm({...form, complaint: e.target.value})} />
+              </div>
+              <div>
+                <label className="font-semibold block mb-1">Duration & Present Illness</label>
+                <textarea rows={2} className="w-full border p-2.5 rounded-xl outline-none" placeholder="Onset, duration, aggravating triggers..." value={form.duration} onChange={e => setForm({...form, duration: e.target.value})} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="font-semibold block mb-1">Vital Signs</label>
+                <input className="w-full border p-2.5 rounded-xl outline-none" placeholder="BP: 120/80, HR: 72, SpO2: 98%" value={form.vitals} onChange={e => setForm({...form, vitals: e.target.value})} />
+              </div>
+              <div>
+                <label className="font-semibold block mb-1">Follow-up Target Date</label>
+                <input type="date" className="w-full border p-2.5 rounded-xl outline-none" value={form.followUp} onChange={e => setForm({...form, followUp: e.target.value})} />
+              </div>
+            </div>
+
+            <div>
+              <label className="font-semibold block mb-1">Physical Examination Observations</label>
+              <textarea rows={2} className="w-full border p-2.5 rounded-xl outline-none" placeholder="General and system examination findings..." value={form.exam} onChange={e => setForm({...form, exam: e.target.value})} />
+            </div>
+
+            <div>
+              <label className="font-semibold block mb-1">Provisional Assessment & Plan (Entered by Practitioner)</label>
+              <textarea rows={2} className="w-full border p-2.5 rounded-xl outline-none" placeholder="Clinical impression, lifestyle precautions, follow-up recommendations..." value={form.assessment} onChange={e => setForm({...form, assessment: e.target.value})} />
+            </div>
+
+            <button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white font-bold px-6 py-2.5 rounded-xl">
+              Save Consultation Record
+            </button>
+          </form>
+        </div>
+      );
+    }
+
+    // --- 5. CONSULTATION HISTORY ---
+    function HistoryView({ consultations }) {
+      return (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">Consultation History</h2>
+            <p className="text-xs text-slate-400">Past consultation encounters and clinical records.</p>
+          </div>
+
+          <div className="space-y-3">
+            {consultations.map(c => (
+              <div key={c.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded">{c.id}</span>
+                  <span className="text-slate-400">{c.date}</span>
+                </div>
+                <h4 className="font-bold text-sm text-slate-900">{c.patientName} ({c.patientId})</h4>
+                <p className="text-xs text-slate-600"><strong>Complaints:</strong> {c.complaint}</p>
+                <p className="text-xs text-slate-600"><strong>Assessment & Advice:</strong> {c.assessment}</p>
+                <p className="text-[11px] text-teal-600 font-semibold">Follow-up: {c.followUp}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // --- 6. AI ASSISTANT VIEW ---
+    function AiAssistantView({ initialNotes }) {
+      const [input, setInput] = useState(
+        initialNotes || "Patient reports 3-week history of throbbing unilateral temporal headaches, photophobia, and morning nausea. BP 134/86 mmHg. Medical history notable for seasonal allergies. Recommending hydration and 14-day symptom log."
+      );
+      const [loading, setLoading] = useState(false);
+      const [summary, setSummary] = useState(null);
+
+      const runSummarizer = () => {
+        setLoading(true);
+        setTimeout(() => {
+          setSummary({
+            complaints: "Unilateral temporal headaches, photophobia, morning nausea for 3 weeks.",
+            history: "Relevant seasonal allergy background.",
+            observations: "BP 134/86 mmHg, neurological signs within regular limits.",
+            plan: "Hydration protocol, symptom journal tracking, review in 14 days."
+          });
+          setLoading(false);
+        }, 800);
+      };
+
+      return (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">AI Clinical Note Summarizer</h2>
+            <p className="text-xs text-slate-400">Prototype summarization pipeline for clinical case notes.</p>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl text-xs text-amber-900">
+            <strong>Academic Disclaimer:</strong> This module is a prototype summarizer. It does not generate independent diagnoses or prescribe medicines. All summaries require practitioner review.
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+              <label className="text-xs font-bold text-slate-700">Practitioner Narrative Notes</label>
+              <textarea 
+                rows={10} 
+                className="w-full text-xs font-mono p-3 border rounded-xl outline-none" 
+                value={input} 
+                onChange={e => setInput(e.target.value)} 
+              />
+              <button 
+                onClick={runSummarizer} 
+                disabled={loading}
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl text-xs"
+              >
+                {loading ? 'Analyzing Clinical Notes...' : 'Summarize Case Notes'}
+              </button>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+              <label className="text-xs font-bold text-slate-700">Structured Extracted Summary</label>
+              {!summary ? (
+                <div className="h-60 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-xs text-slate-400">
+                  Click Summarize to synthesize structured case items.
+                </div>
+              ) : (
+                <div className="space-y-3 text-xs">
+                  <div className="bg-slate-50 p-3 rounded-xl">
+                    <span className="text-[10px] uppercase font-bold text-teal-700">Primary Complaints</span>
+                    <p className="mt-0.5 text-slate-800">{summary.complaints}</p>
+                  </div>
+                  <div className="bg-slate-50 p-3 rounded-xl">
+                    <span className="text-[10px] uppercase font-bold text-sky-700">Clinical Background</span>
+                    <p className="mt-0.5 text-slate-800">{summary.history}</p>
+                  </div>
+                  <div className="bg-slate-50 p-3 rounded-xl">
+                    <span className="text-[10px] uppercase font-bold text-indigo-700">Observations & Vitals</span>
+                    <p className="mt-0.5 text-slate-800">{summary.observations}</p>
+                  </div>
+                  <div className="bg-slate-50 p-3 rounded-xl">
+                    <span className="text-[10px] uppercase font-bold text-emerald-700">Follow-up Actions</span>
+                    <p className="mt-0.5 text-slate-800">{summary.plan}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- 7. REPORTS & CSV EXPORT ---
+    function ReportsView({ patients, consultations }) {
+      const exportCSV = () => {
+        const rows = [
+          ["ID", "Name", "Age", "Gender", "Category", "Status"],
+          ...patients.map(p => [p.id, p.fullName, p.age, p.gender, p.category, p.status])
+        ];
+        const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csvContent));
+        link.setAttribute("download", `CareSphere_Cohort_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      };
+
+      return (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center no-print">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">Reports & Analytics</h2>
+              <p className="text-xs text-slate-400">Export active cohorts and print clinical summaries.</p>
+            </div>
+            <div className="space-x-2">
+              <button onClick={exportCSV} className="bg-white border text-slate-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-50">
+                Export CSV
+              </button>
+              <button onClick={() => window.print()} className="bg-teal-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-teal-700">
+                Print Clinical Sheet
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs print:border-none">
+            <h3 className="font-bold text-sm text-slate-900 border-b pb-3 mb-4">Patient Cohort Report</h3>
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b text-slate-400 uppercase text-[10px]">
+                  <th className="py-2">ID</th>
+                  <th className="py-2">Name</th>
+                  <th className="py-2">Demographics</th>
+                  <th className="py-2">Department</th>
+                  <th className="py-2">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {patients.map(p => (
+                  <tr key={p.id}>
+                    <td className="py-2.5 font-bold text-teal-700">{p.id}</td>
+                    <td className="py-2.5 font-semibold text-slate-900">{p.fullName}</td>
+                    <td className="py-2.5 text-slate-600">{p.gender}, {p.age}y</td>
+                    <td className="py-2.5 text-slate-600">{p.category}</td>
+                    <td className="py-2.5 font-bold text-slate-700">{p.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    // --- 8. SETTINGS VIEW ---
+    function SettingsView() {
+      return (
+        <div className="max-w-xl bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4 text-xs">
+          <h2 className="text-xl font-bold text-slate-900">System Preferences</h2>
+          <div>
+            <label className="font-semibold block mb-1">Practitioner Lead</label>
+            <input className="w-full border p-2.5 rounded-xl outline-none" defaultValue="Dr. Evelyn Reed, MD" />
+          </div>
+          <div>
+            <label className="font-semibold block mb-1">Affiliated Health Institute</label>
+            <input className="w-full border p-2.5 rounded-xl outline-none" defaultValue="University AI Clinical Teaching Hospital" />
+          </div>
+          <div className="bg-slate-50 p-4 rounded-xl space-y-2">
+            <span className="font-bold text-slate-700 uppercase text-[10px]">Flask Backend Integration Target</span>
+            <p className="text-slate-600 font-mono text-[11px]">API: http://127.0.0.1:5000/api/v1/patients</p>
+            <p className="text-slate-500 text-[10px]">When connecting your Python Flask + MySQL code, point your requests to this REST route.</p>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
